@@ -1,0 +1,141 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // Default deny catch-all
+    match /{document=**} {
+      allow read, write: if false;
+    }
+
+    // Customer Profiles: /users/{userId}
+    match /users/{userId} {
+      allow read: if request.auth != null;
+      allow create, update: if request.auth != null && request.auth.uid == userId;
+      allow delete: if false;
+    }
+
+    // Driver Profiles: /drivers/{driverId}
+    match /drivers/{driverId} {
+      allow read: if request.auth != null;
+      allow create, update: if request.auth != null && request.auth.uid == driverId;
+      allow delete: if false;
+    }
+
+    // Real-time Driver Radar & GPS: /driverLocations/{driverId}
+    match /driverLocations/{driverId} {
+      allow read: if request.auth != null;
+      allow create, update, delete: if request.auth != null && request.auth.uid == driverId;
+    }
+
+    // Driver KYC & Verification Documents: /driverDocuments/{driverId}
+    match /driverDocuments/{driverId} {
+      allow read, write: if request.auth != null && request.auth.uid == driverId;
+    }
+
+    // Driver Stats & Earnings: /driverStats/{driverId}
+    match /driverStats/{driverId} {
+      allow read, write: if request.auth != null && request.auth.uid == driverId;
+    }
+
+    // Global Fare Configurations (Read-only for clients)
+    match /fareConfigs/{document=**} {
+      allow read: if request.auth != null;
+      allow write: if false;
+    }
+
+    // Vehicle Fare Configurations (Read-only for clients)
+    match /vehicleFareConfigs/{document=**} {
+      allow read: if request.auth != null;
+      allow write: if false;
+    }
+
+    // Driver Notifications to Admin: /adminNotifications/{docId}
+    match /adminNotifications/{docId} {
+      allow create: if request.auth != null && request.resource.data.driverId == request.auth.uid;
+      allow read, update, delete: if false;
+    }
+
+    // Canonical Rides Collection: /rides/{rideId}
+    match /rides/{rideId} {
+      // Searching rides are readable for dispatch discovery; assigned rides readable only by passenger or driver
+      allow read: if request.auth != null && (
+        resource.data.rideStatus == 'searching' ||
+        resource.data.driverId == request.auth.uid ||
+        resource.data.customerId == request.auth.uid
+      );
+
+      // Authenticated customer creates a new ride request
+      allow create: if request.auth != null &&
+        request.resource.data.customerId == request.auth.uid &&
+        (request.resource.data.rideStatus == 'searching' || !('rideStatus' in request.resource.data)) &&
+        (!('driverId' in request.resource.data) || request.resource.data.driverId == null);
+
+      // Atomic, role-guarded and field-guarded state transitions across lifecycle
+      allow update: if request.auth != null && (
+        // Action 1: Driver accepts a searching ride (atomic first-valid-accept-wins via runTransaction)
+        (resource.data.rideStatus == 'searching' &&
+         request.resource.data.rideStatus in ['driverAssigned', 'driverArriving'] &&
+         request.resource.data.driverId == request.auth.uid &&
+         (!('customerId' in resource.data) || request.resource.data.customerId == resource.data.customerId) &&
+         (!('pickupLatitude' in resource.data) || request.resource.data.pickupLatitude == resource.data.pickupLatitude) &&
+         (!('destinationLatitude' in resource.data) || request.resource.data.destinationLatitude == resource.data.destinationLatitude) &&
+         (!('estimatedFare' in resource.data) || request.resource.data.estimatedFare == resource.data.estimatedFare)) ||
+
+        // Action 2: Driver rejects/passes on an incoming ride request (adds to rejectedDriverIds)
+        (resource.data.rideStatus == 'searching' &&
+         request.resource.data.rideStatus == 'searching' &&
+         (!('driverId' in resource.data) || request.resource.data.driverId == resource.data.driverId) &&
+         (!('customerId' in resource.data) || request.resource.data.customerId == resource.data.customerId) &&
+         (request.auth.uid in request.resource.data.rejectedDriverIds ||
+          request.resource.data.rejectedBy == request.auth.uid)) ||
+
+        // Action 3: Assigned Driver updating active ride (arrival, OTP start, live GPS telemetry, completion, cancellation)
+        (resource.data.driverId == request.auth.uid &&
+         request.resource.data.driverId == request.auth.uid &&
+         (!('customerId' in resource.data) || request.resource.data.customerId == resource.data.customerId) &&
+         (!('pickupLatitude' in resource.data) || request.resource.data.pickupLatitude == resource.data.pickupLatitude) &&
+         (!('destinationLatitude' in resource.data) || request.resource.data.destinationLatitude == resource.data.destinationLatitude) &&
+         request.resource.data.rideStatus in [
+           'driverAssigned', 'driverArriving', 'driverArrived',
+           'rideStarted', 'rideCompleted', 'cancelledByDriver'
+         ]) ||
+
+        // Action 4: Passenger/Customer updating their ride (cancellation, rating, tip, payment)
+        (resource.data.customerId == request.auth.uid &&
+         request.resource.data.customerId == request.auth.uid &&
+         request.resource.data.driverId == resource.data.driverId &&
+         (!('pickupLatitude' in resource.data) || request.resource.data.pickupLatitude == resource.data.pickupLatitude) &&
+         (!('destinationLatitude' in resource.data) || request.resource.data.destinationLatitude == resource.data.destinationLatitude) &&
+         (!('estimatedFare' in resource.data) || request.resource.data.estimatedFare == resource.data.estimatedFare) &&
+         (!('driverCurrentLatitude' in resource.data) || request.resource.data.driverCurrentLatitude == resource.data.driverCurrentLatitude) &&
+         (!('driverCurrentLongitude' in resource.data) || request.resource.data.driverCurrentLongitude == resource.data.driverCurrentLongitude) &&
+         (!('driver' in resource.data) || request.resource.data.driver == resource.data.driver) &&
+         (!('otp' in resource.data) || request.resource.data.otp == resource.data.otp) &&
+         (!('pin' in resource.data) || request.resource.data.pin == resource.data.pin) && (
+           // 4a: Cancellation permitted prior to ride start
+           (resource.data.rideStatus in ['searching', 'driverAssigned', 'driverArriving'] &&
+            request.resource.data.rideStatus in ['cancelledByCustomer', 'cancelled']) ||
+           // 4b: Rating, review, feedback, tip or payment update with unchanged status
+           (request.resource.data.rideStatus == resource.data.rideStatus)
+         ))
+      );
+
+      allow delete: if false;
+
+      // In-ride quick chat messages subcollection: /rides/{rideId}/messages/{messageId}
+      match /messages/{messageId} {
+        allow read: if request.auth != null && (
+          get(/databases/$(database)/documents/rides/$(rideId)).data.customerId == request.auth.uid ||
+          get(/databases/$(database)/documents/rides/$(rideId)).data.driverId == request.auth.uid
+        );
+        allow create: if request.auth != null &&
+          request.resource.data.senderId == request.auth.uid && (
+            get(/databases/$(database)/documents/rides/$(rideId)).data.customerId == request.auth.uid ||
+            get(/databases/$(database)/documents/rides/$(rideId)).data.driverId == request.auth.uid
+          );
+        allow update, delete: if false;
+      }
+    }
+  }
+}
+

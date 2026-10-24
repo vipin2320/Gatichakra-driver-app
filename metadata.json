@@ -1,0 +1,6 @@
+{
+  "name": "GatiChakra Driver",
+  "description": "Professional driver-side application for GatiChakra drivers.",
+  "requestFramePermissions": ["geolocation"],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

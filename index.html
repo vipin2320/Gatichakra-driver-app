@@ -1,0 +1,36 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>GatiChakra Driver</title>
+    <link rel="icon" type="image/png" href="/logo.png" />
+    <meta name="theme-color" content="#000000" />
+    <meta name="mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+    <meta name="apple-mobile-web-app-title" content="GatiDriver" />
+    <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
+    <meta name="description" content="Professional driver-side application for GatiChakra drivers." />
+    <meta property="og:title" content="GatiChakra Driver" />
+    <meta property="og:description" content="Professional driver-side application for GatiChakra drivers." />
+    <meta property="og:type" content="website" />
+    <meta name="twitter:card" content="summary_large_image" />
+    <link rel="manifest" href="/manifest.json" />
+    <!-- Mappls Map SDK with API key (non-blocking defer) -->
+    <script defer src="https://apis.mappls.com/advancedmaps/api/%VITE_MAPPLS_API_KEY%/map_sdk?layer=vector&v=3.0"></script>
+  </head>
+  <body class="bg-[#0D0D0D]">
+    <div id="root">
+      <div style="min-height: 100vh; background: #0D0D0D; color: #ffffff; display: flex; flex-direction: column; align-items: center; justify-content: center; font-family: system-ui, -apple-system, sans-serif;">
+        <div style="width: 40px; height: 40px; border: 3px solid #222222; border-top-color: #FF4500; border-radius: 50%; animation: gatiSpin 0.8s linear infinite;"></div>
+        <p style="margin-top: 16px; font-size: 13px; font-weight: 700; color: #888888; letter-spacing: 0.5px;">GatiChakra Driver चालू हो रहा है...</p>
+      </div>
+      <style>
+        @keyframes gatiSpin { to { transform: rotate(360deg); } }
+      </style>
+    </div>
+    <script type="module" src="/src/main.tsx"></script>
+  </body>
+</html>
+

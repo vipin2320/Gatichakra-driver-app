@@ -1,0 +1,11 @@
+  // Listen to incoming rides from Firestore when Online
+  useEffect(() => {
+    if (!isOnline || isBlocked) {
+      setAvailableRides([]);
+      return;
+    }
+
+    const fiveMinutesAgo = new Date(Date.now() - 5 * 60 * 1000).toISOString();
+    const q = query(
+      collection(db, 'rides'),
+      where('rideStatus', '==', 'searching'),

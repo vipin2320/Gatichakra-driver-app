@@ -1,0 +1,46 @@
+--- src/App.tsx.orig
++++ src/App.tsx
+@@ -621,18 +621,27 @@
+ 
+     if (incomingRide) {
+       try {
+         const rideRef = doc(db, 'rides', incomingRide.id);
+-        await updateDoc(rideRef, {
+-          rideStatus: 'driverAssigned',
+-          driverId: driverId,
+-          driverName: 'Ramesh Kumar',
+-          driverPhone: phoneNumber,
+-          driverVehicleNumber: 'UP 16 AB 1234',
+-          driverVehicleModel: 'Maruti Swift Dzire',
+-          driverCurrentLatitude: driverLat,
+-          driverCurrentLongitude: driverLng,
+-          acceptedAt: new Date().toISOString()
+-        });
++        await runTransaction(db, async (transaction) => {
++          const rideDoc = await transaction.get(rideRef);
++          if (!rideDoc.exists()) {
++            throw "Ride does not exist!";
++          }
++          if (rideDoc.data().rideStatus !== 'searching') {
++            throw "Ride is no longer available (already accepted or cancelled).";
++          }
++          transaction.update(rideRef, {
++            rideStatus: 'driverAssigned',
++            driverId: driverId,
++            driverName: 'Ramesh Kumar',
++            driverPhone: phoneNumber,
++            driverVehicleType: driverVehicleType,
++            driverVehicleNumber: 'UP 16 AB 1234',
++            driverVehicleModel: 'Maruti Swift Dzire',
++            driverCurrentLatitude: driverLat,
++            driverCurrentLongitude: driverLng,
++            assignedAt: new Date().toISOString()
++          });
++        });
+       } catch (e) {
+-        console.warn("Direct update fallback:", e);
++        alert(e);
++        setIncomingRide(null);
++        return;
+       }
+       setAcceptedRide(incomingRide);

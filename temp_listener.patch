@@ -1,0 +1,12 @@
+--- src/App.tsx.orig
++++ src/App.tsx
+@@ -364,6 +364,9 @@
+       snapshot.forEach((d) => {
+         const data = d.data() as any;
+         if (data.rejectedBy !== driverId) {
++          // Vehicle matching: Only show rides matching driver's vehicle type, or rides without vehicleType (for backward compatibility if needed, but here we strict match if exists)
++          if (data.vehicleType && data.vehicleType !== driverVehicleType) return;
++          
+           rides.push({
+             id: d.id,
+             customerId: data.customerId || '',

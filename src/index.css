@@ -1,0 +1,62 @@
+@import "tailwindcss";
+@import "leaflet/dist/leaflet.css";
+
+/* Leaflet container fixes */
+.leaflet-container {
+  width: 100%;
+  height: 100%;
+  z-index: 10;
+  font-family: inherit;
+  background-color: #121212 !important;
+}
+
+/* Premium Dark Navigation Theme for Map Tiles (Watermark-Free) */
+.leaflet-tile-pane {
+  filter: brightness(0.6) invert(1) contrast(3) hue-rotate(200deg) saturate(0.3) brightness(0.7);
+}
+
+/* Ensure markers, popups, and route lines stay bright & sharp */
+.leaflet-marker-pane,
+.leaflet-overlay-pane,
+.leaflet-popup-pane {
+  filter: none !important;
+}
+
+
+/* ================== LIGHT THEME OVERRIDES ================== */
+.theme-light {
+  background-color: #f3f4f6 !important;
+}
+.theme-light .bg-\[\#121212\] { background-color: #f9fafb !important; }
+.theme-light .bg-\[\#1a1a1a\] { background-color: #ffffff !important; }
+.theme-light .bg-\[\#161616\] { background-color: #ffffff !important; }
+.theme-light .bg-\[\#202020\] { background-color: #f3f4f6 !important; }
+.theme-light .bg-\[\#222\] { background-color: #e5e7eb !important; }
+.theme-light .bg-\[\#252525\] { background-color: #e5e7eb !important; }
+.theme-light .bg-black { background-color: #ffffff !important; }
+.theme-light .bg-black\/80 { background-color: rgba(255,255,255,0.9) !important; }
+.theme-light .bg-black\/50 { background-color: rgba(255,255,255,0.7) !important; }
+
+/* Text Overrides */
+.theme-light .text-white { color: #111827 !important; }
+.theme-light .text-gray-300 { color: #4b5563 !important; }
+.theme-light .text-gray-400 { color: #6b7280 !important; }
+.theme-light .text-gray-500 { color: #6b7280 !important; }
+
+/* Border Overrides */
+.theme-light .border-\[\#333\] { border-color: #e5e7eb !important; }
+.theme-light .border-\[\#222\] { border-color: #e5e7eb !important; }
+.theme-light .border-\[\#252525\] { border-color: #e5e7eb !important; }
+.theme-light .border-\[\#282828\] { border-color: #e5e7eb !important; }
+
+/* Invert Map to Normal (Day Mode) */
+.theme-light .leaflet-tile-pane {
+  filter: none !important;
+}
+.theme-light .leaflet-container {
+  background-color: #f3f4f6 !important;
+}
+
+/* Specific adjustments for Light mode to keep accents visible */
+.theme-light .text-amber-500 { color: #d97706 !important; }
+.theme-light .bg-amber-500\/10 { background-color: rgba(245, 158, 11, 0.15) !important; }
